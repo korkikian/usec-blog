@@ -7,31 +7,13 @@
 
 title: "Dumping eMMC Like a PRO"
 date: 2025-05-08
-categories: [TOP_CATEGORIE, SUB_CATEGORIE]
+categories: [Tutorial, eMMC]
 tags: [emmc, hydrabus, easyjtag, hacking, beaglebone, easyjtag]     # TAG names should always be lowercase
 description: Step-by-step guide to dumping eMMC memory using EasyJTAG, BeagleBone Black, and HydraBus — including access to BOOT, USER, and RPMB partitions.
 toc: true
 comments: true
 
 ---
-
-### **Tools Used**
-- AOYUE hot air station  
-- Binocular microscope  
-- Reballing toolset and low-temperature soldering paste  
-- Easy JTAG Plus  
-- ICFriend universal eMMC socket  
-- Consumables such as desoldering wire, pliers, acetone, etc.  
-- Breakout PCB for eMMC  
-- Dell Precision 3470 laptop  
-- BeagleBone Black single-board computer
-
-### **Useful External links**
-- [JEDEC eMMC 5.1 Specification](https://www.jedec.org/document_search?search_api_views_fulltext=jesd84-b51){:target="_blank" rel="noopener"}
-- [HydraBus Binary MMC Mode Guide](https://github.com/hydrabus/hydrafw/wiki/HydraFW-binary-MMC-mode-guide){:target="_blank" rel="noopener"}
-- [Replay Protected Memory Block](https://en.wikipedia.org/wiki/Replay_Protected_Memory_Block){:target="_blank" rel="noopener"}
-- [eMMC WFBGA153 to microSD card adapter PCB](https://github.com/voltlog/emmc-wfbga153-microsd){:target="_blank" rel="noopener"}
-- [Reballing eMMC](https://www.youtube.com/shorts/s1ZNlKvwHKE){:target="_blank" rel="noopener"}
 
 ## Introduction
 
@@ -47,11 +29,29 @@ We also assume that the eMMC chip has been removed from the board. While in-circ
 > To keep the blog post concise, we’ve placed the eMMC description at a different post. Nonetheless, we want to emphasize that our goal is to read all three hardware partitions - BOOT, USER, and RPMB.
 {: .prompt-info }
 
+### Tools Used
+- AOYUE hot air station  
+- Binocular microscope  
+- Reballing toolset and low-temperature soldering paste  
+- Easy JTAG Plus  
+- ICFriend universal eMMC socket  
+- Consumables such as desoldering wire, pliers, acetone, etc.  
+- Breakout PCB for eMMC  
+- Dell Precision 3470 laptop  
+- BeagleBone Black single-board computer
+
+### Useful External links
+- [JEDEC eMMC 5.1 Specification](https://www.jedec.org/document_search?search_api_views_fulltext=jesd84-b51){:target="_blank" rel="noopener"}
+- [HydraBus Binary MMC Mode Guide](https://github.com/hydrabus/hydrafw/wiki/HydraFW-binary-MMC-mode-guide){:target="_blank" rel="noopener"}
+- [Replay Protected Memory Block](https://en.wikipedia.org/wiki/Replay_Protected_Memory_Block){:target="_blank" rel="noopener"}
+- [eMMC WFBGA153 to microSD card adapter PCB](https://github.com/voltlog/emmc-wfbga153-microsd){:target="_blank" rel="noopener"}
+- [Reballing eMMC](https://www.youtube.com/shorts/s1ZNlKvwHKE){:target="_blank" rel="noopener"}
+
 ## Dumping eMMC Like a Repair Expert
 
-If you need to dump eMMC chips regularly, we recommend investing in a commercial tool designed for this purpose. These tools typically include a socket where the eMMC chip can be inserted. In most cases, you can dump all the hardware partitions - **BOOT**, **USER**, and **RPMB** - with a single click.
+If you need to dump eMMC chips regularly, we recommend investing in a commercial tool designed for this purpose. These tools typically include a socket where the eMMC chip can be inserted. In most cases, you can dump all the hardware partitions - BOOT, USER, and RPMB - with a single click.
 
-**Examples of the commercially available tools:**
+### Examples of the commercially available tools
 
 | Tool        | URL                                                 |
 |-------------|-----------------------------------------------------|
@@ -86,7 +86,6 @@ If you need to dump eMMC chips regularly, we recommend investing in a commercial
 Let’s look at the beginning of the dumped BOOT and RPMB partitions. Although the first 64 bytes don’t contain much information, we can see that the BOOT partition uses big-endian byte order, whereas the RPMB partition uses little-endian.
 ![eMMC_dumps_easyjtag](/assets/img/blog/2025-05-01-emmc-dumping-guide/Linux_console_easyjtag.png)
 _Figure 6. BOOT and RPMB partition data (dumped using EasyJTAG)_
-
 
 ---
 
@@ -151,7 +150,7 @@ HydraBus ([hydrabus.com](https://hydrabus.com){:target="_blank" rel="noopener"})
 ![HydraBus](/assets/img/blog/2025-05-01-emmc-dumping-guide/HydraBus.jpg)
 _Figure 13. HydraBus — the Swiss Army knife for hardware hackers_
 
-To work with an eMMC, it lets you send **raw commands**, which is perfect if you're experimenting with command sequences, vendor extensions, or reverse engineering RPMB behavior. The current HydraBus firmware can access only the USER and the RPMB partitions, accessing the BOOT partition is a way trickier due to the SD controller state machine and currently the BOOT partition can not be read with HydraBus.
+To work with an eMMC, it lets you send raw commands, which is perfect if you're experimenting with command sequences, vendor extensions, or reverse engineering RPMB behavior. The current HydraBus firmware can access only the USER and the RPMB partitions, accessing the BOOT partition is a way trickier due to the SD controller state machine and currently the BOOT partition can not be read with HydraBus.
 
 ### Steps for the PRO Hardware Hacker
 1. Unsolder the eMMC.  
@@ -168,6 +167,6 @@ To work with an eMMC, it lets you send **raw commands**, which is perfect if you
 The Python function shown in the last image begins by resetting the eMMC with command CMD0. Reading an RPMB sector then requires sending CMD1, CMD2, CMD3, CMD6, CMD7, CMD8, CMD9, CMD13, CMD18, and CMD23 in the correct sequence while following the RPMB protocol. At one point the eMMC clock must be raised; otherwise, the device will not transition to the next state. When the read completes, the python code parses the raw RPMB packet to isolate the data payload, and displays it with hexdump. A detailed walkthrough of the RPMB protocol is beyond the scope of this post.
 
 ### Why Not Use BBB for this sort of research?
-- HydraBus gives **full control** so that you are sure about the current eMMC state.
+- HydraBus gives full control so that you are sure about the current eMMC state.
 - HydraBus can reset the eMMC without rebooting the whole SBC.
 - Better for glitching, fault injection, and fine-grained research since HydraBus can control the eMMC frequency, timing, accessing the current eMMC state, etc.
